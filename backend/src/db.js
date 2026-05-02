@@ -1,0 +1,18 @@
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT || '5432'),
+  user: process.env.POSTGRES_USER || 'proy2',
+  password: process.env.POSTGRES_PASSWORD || 'secret',
+  database: process.env.POSTGRES_DB || 'tienda',
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+
+pool.on('error', (err) => {
+  console.error('Error inesperado en pool de PostgreSQL:', err);
+});
+
+module.exports = pool;

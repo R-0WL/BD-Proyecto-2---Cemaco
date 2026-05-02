@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sistema de gestión de inventario y ventas para tienda retail">
+  <title>🛒 CEMACO 2.0 XDGT — Inventario y Ventas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+  <nav id="main-nav">
+    <div class="nav-brand">
+      <span class="nav-logo">🛒</span>
+      <span class="nav-title">CEMACO 2.0 XDGT</span>
+    </div>
+    <div class="nav-links" id="nav-links">
+      <a href="#/" class="nav-link active" data-route="/">Inicio</a>
+      <a href="#/productos" class="nav-link" data-route="/productos">Productos</a>
+      <a href="#/clientes" class="nav-link" data-route="/clientes">Clientes</a>
+      <a href="#/empleados" class="nav-link" data-route="/empleados">Empleados</a>
+      <a href="#/proveedores" class="nav-link" data-route="/proveedores">Proveedores</a>
+      <a href="#/categorias" class="nav-link" data-route="/categorias">Categorías</a>
+      <a href="#/sucursales" class="nav-link" data-route="/sucursales">Sucursales</a>
+      <a href="#/inventario" class="nav-link" data-route="/inventario">Inventario</a>
+      <a href="#/ventas" class="nav-link" data-route="/ventas">Ventas</a>
+      <a href="#/facturas" class="nav-link" data-route="/facturas">Facturas</a>
+      <a href="#/devoluciones" class="nav-link" data-route="/devoluciones">Devoluciones</a>
+      <a href="#/reportes" class="nav-link" data-route="/reportes">Reportes</a>
+    </div>
+    <div class="nav-auth" id="nav-auth">
+      <button id="btn-login" class="btn btn-primary btn-sm" onclick="window.location.hash='#/login'">Iniciar
+        Sesión</button>
+    </div>
+  </nav>
+
+  <main id="app" class="container">
+    <!-- SPA content loads here -->
+  </main>
+
+  <div id="toast-container"></div>
+
+  <footer>
+    <p>© 2026 CEMACO 2.0 XDGT — Sistema de Inventario y Ventas | Proyecto 2 Base de Datos</p>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/views/productos.js"></script>
+  <script src="/js/views/clientes.js"></script>
+  <script src="/js/views/ventas.js"></script>
+  <script src="/js/views/reportes.js"></script>
+  <script src="/js/views/inventario.js"></script>
+  <script src="/js/views/facturas.js"></script>
+  <script src="/js/views/devoluciones.js"></script>
+  <script src="/js/views/empleados.js"></script>
+  <script src="/js/views/proveedores.js"></script>
+  <script src="/js/views/categorias.js"></script>
+  <script src="/js/views/sucursales.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+
+</html>

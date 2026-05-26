@@ -46,6 +46,15 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Error interno del servidor', detalle: err.message });
 });
 
-app.listen(PORT, () => {
+const db = require('./db/drizzle');
+const { Categoria } = require('./db/schema');
+
+app.listen(PORT, async () => {
   console.log(`Backend corriendo en puerto ${PORT}`);
+  try {
+    const test = await db.select().from(Categoria).limit(1);
+    console.log('ORM Drizzle conectado correctamente, prueba ejecutada.');
+  } catch (err) {
+    console.error('Error al inicializar ORM Drizzle:', err.message);
+  }
 });

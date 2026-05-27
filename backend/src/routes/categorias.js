@@ -1,58 +1,88 @@
 const router = require('express').Router();
-const pool = require('../db');
+const db = require('../db/drizzle');
+const { Categoria, CategoriaTecnologia } = require('../db/schema');
+const { eq, asc } = require('drizzle-orm');
 const { authMiddleware } = require('../middleware/auth');
 
+// GET todas las categorías
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT c.*, ct.subtipo FROM Categoria c
-       LEFT JOIN Categoria_Tecnologia ct ON c.id_categoria = ct.id_categoria
-       ORDER BY c.id_categoria`
-    );
-    res.json(result.rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+    const rows = await db
+      .select({
+        id_categoria: Categoria.id_categoria,
+        tipo_categoria: Categoria.tipo_categoria,
+        descripcion: Categoria.descripcion,
+        subtipo: CategoriaTecnologia.subtipo,
+      })
+      .from(Categoria)
+      .leftJoin(CategoriaTecnologia, eq(Categoria.id_categoria, CategoriaTecnologia.id_categoria))
+      .orderBy(asc(Categoria.id_categoria));
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
+// POST crear categoría
 router.post('/', authMiddleware, async (req, res) => {
-  const client = await pool.connect();
   try {
     const { tipo_categoria, descripcion, subtipo } = req.body;
     if (!tipo_categoria) return res.status(400).json({ error: 'tipo_categoria es obligatorio' });
-    await client.query('BEGIN');
-    const r = await client.query(
-      `INSERT INTO Categoria (tipo_categoria, descripcion) VALUES ($1,$2) RETURNING id_categoria`,
-      [tipo_categoria, descripcion]
-    );
-    const id = r.rows[0].id_categoria;
-    if (subtipo) {
-      await client.query(`INSERT INTO Categoria_Tecnologia (id_categoria, subtipo) VALUES ($1,$2)`, [id, subtipo]);
-    }
-    await client.query('COMMIT');
+
+    const id = await db.transaction(async (tx) => {
+      const [newCat] = await tx
+        .insert(Categoria)
+        .values({ tipo_categoria, descripcion })
+        .returning({ id_categoria: Categoria.id_categoria });
+
+      const catId = newCat.id_categoria;
+      if (subtipo) {
+        await tx
+          .insert(CategoriaTecnologia)
+          .values({ id_categoria: catId, subtipo });
+      }
+      return catId;
+    });
+
     res.status(201).json({ id_categoria: id, message: 'Categoría creada' });
   } catch (err) {
-    await client.query('ROLLBACK');
     res.status(500).json({ error: err.message });
-  } finally { client.release(); }
+  }
 });
 
+// PUT actualizar categoría
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const { tipo_categoria, descripcion } = req.body;
-    const result = await pool.query(
-      `UPDATE Categoria SET tipo_categoria=COALESCE($1,tipo_categoria), descripcion=COALESCE($2,descripcion)
-       WHERE id_categoria=$3 RETURNING *`, [tipo_categoria, descripcion, req.params.id]
-    );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'No encontrada' });
-    res.json(result.rows[0]);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+    const idVal = parseInt(req.params.id);
+    
+    const [updated] = await db
+      .update(Categoria)
+      .set({ tipo_categoria, descripcion })
+      .where(eq(Categoria.id_categoria, idVal))
+      .returning();
+      
+    if (!updated) return res.status(404).json({ error: 'No encontrada' });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
+// DELETE categoría
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
-    const r = await pool.query(`DELETE FROM Categoria WHERE id_categoria=$1 RETURNING id_categoria`, [req.params.id]);
-    if (r.rows.length === 0) return res.status(404).json({ error: 'No encontrada' });
+    const idVal = parseInt(req.params.id);
+    const [deleted] = await db
+      .delete(Categoria)
+      .where(eq(Categoria.id_categoria, idVal))
+      .returning({ id_categoria: Categoria.id_categoria });
+      
+    if (!deleted) return res.status(404).json({ error: 'No encontrada' });
     res.json({ message: 'Categoría eliminada' });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

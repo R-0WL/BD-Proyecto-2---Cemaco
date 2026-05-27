@@ -1,13 +1,8 @@
 const router = require('express').Router();
 const pool = require('../db');
-// [COMENTADO - bcrypt desactivado]
-// const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 
-// [COMENTADO - JWT desactivado]
-// const { generateToken } = require('../middleware/auth');
-
-// POST /auth/login — Login plano (sin JWT)
+// POST /auth/login — Login con sesiones Express
 router.post('/login', async (req, res) => {
   try {
     const { dpi, password } = req.body;
@@ -22,43 +17,52 @@ router.post('/login', async (req, res) => {
     const cuenta = result.rows[0];
     if (!cuenta.estado) return res.status(401).json({ error: 'Cuenta desactivada' });
 
-    // [COMENTADO - bcrypt desactivado]
-    // const valid = await bcrypt.compare(password, cuenta.password_hash);
     const hashLogin = crypto.createHash('sha256').update(password).digest('hex');
     const valid = (hashLogin === cuenta.password_hash);
     
     if (!valid) return res.status(401).json({ error: 'Credenciales inválidas' });
 
-    // [COMENTADO - generación de JWT desactivada]
-    // const token = generateToken({ id_cuenta: cuenta.id_cuenta, dpi: cuenta.dpi, rol: cuenta.rol });
-
     // Actualizar último login
     await pool.query(`UPDATE Cuenta SET ultimo_login = NOW() WHERE id_cuenta = $1`, [cuenta.id_cuenta]);
 
-    // [COMENTADO - registro de sesión en tabla Sesion desactivado]
-    // await pool.query(
-    //   `INSERT INTO Sesion (id_cuenta, refresh_token, fecha_expiracion) VALUES ($1, $2, NOW() + INTERVAL '7 days')`,
-    //   [cuenta.id_cuenta, token]
-    // );
+    // Almacenar el usuario y rol en la sesión Express
+    req.session.user = { 
+      dpi: cuenta.dpi, 
+      nombre: cuenta.nombre, 
+      rol: cuenta.rol,
+      id_cuenta: cuenta.id_cuenta
+    };
 
-    // Devuelve usuario sin token
     res.json({
-      usuario: { dpi: cuenta.dpi, nombre: cuenta.nombre, rol: cuenta.rol }
+      usuario: req.session.user
     });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ error: err.message }); 
+  }
 });
 
-// POST /auth/logout — Logout plano (sin revocar token)
-router.post('/logout', async (req, res) => {
-  // [COMENTADO - revocación de token desactivada]
-  // try {
-  //   const authHeader = req.headers.authorization;
-  //   if (authHeader) {
-  //     const token = authHeader.split(' ')[1];
-  //     await pool.query(`UPDATE Sesion SET revocado = TRUE WHERE refresh_token = $1`, [token]);
-  //   }
-  // } catch (err) { /* ignorar */ }
-  res.json({ message: 'Sesión cerrada' });
+// POST /auth/logout — Cierre de sesión y destrucción de cookie/sesión
+router.post('/logout', (req, res) => {
+  if (req.session) {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error al cerrar la sesión' });
+      }
+      res.clearCookie('connect.sid');
+      res.json({ message: 'Sesión cerrada' });
+    });
+  } else {
+    res.json({ message: 'No había sesión activa' });
+  }
+});
+
+// GET /auth/me — Obtener datos del usuario logueado en la sesión
+router.get('/me', (req, res) => {
+  if (req.session && req.session.user) {
+    res.json({ usuario: req.session.user });
+  } else {
+    res.status(401).json({ error: 'Sesión expirada o no iniciada' });
+  }
 });
 
 // POST /auth/register — Registro de nuevo cliente
@@ -80,8 +84,6 @@ router.post('/register', async (req, res) => {
       await client.query(`INSERT INTO Cliente (dpi, nit) VALUES ($1,$2)`, [dpi, nit || null]);
     }
 
-    // [COMENTADO - bcrypt desactivado]
-    // const hash = await bcrypt.hash(password, 10);
     const hash = crypto.createHash('sha256').update(password).digest('hex');
     
     await client.query(

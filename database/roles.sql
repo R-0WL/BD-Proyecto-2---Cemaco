@@ -98,3 +98,23 @@ INSERT INTO Cuenta (dpi, password_hash, estado, rol) VALUES
 ('3001000010004', '2bb80e95df3d3c4dae727b4b768b4d70fbcd9c84433af1afd4685539cf13e175', TRUE, 'inventario'),
 ('3001000010005', '2bb80e95df3d3c4dae727b4b768b4d70fbcd9c84433af1afd4685539cf13e175', TRUE, 'auditor')
 ON CONFLICT (dpi) DO NOTHING;
+
+-- 8. Conceder roles al usuario de conexión proy3 para permitir SET ROLE
+GRANT administrador, gerente, vendedor, inventario, auditor TO proy3;
+
+-- 9. Tabla para connect-pg-simple (Manejo de Sesiones Express)
+CREATE TABLE IF NOT EXISTS "session" (
+  "sid" varchar NOT NULL COLLATE "default",
+  "sess" json NOT NULL,
+  "expire" timestamp(6) NOT NULL
+)
+WITH (OIDS=FALSE);
+
+ALTER TABLE "session" DROP CONSTRAINT IF EXISTS "session_pkey";
+ALTER TABLE "session" ADD CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
+
+CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
+
+-- Conceder permisos sobre la tabla de sesiones
+GRANT ALL PRIVILEGES ON TABLE "session" TO public;
+

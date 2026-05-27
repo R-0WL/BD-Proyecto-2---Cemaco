@@ -1,6 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
+const pool = require('./db');
 
 const productosRouter = require('./routes/productos');
 const clientesRouter = require('./routes/clientes');
@@ -19,6 +22,20 @@ const app = express();
 const PORT = process.env.APP_PORT || process.env.PORT || 5000;
 
 app.use(cors());
+app.use(session({
+  store: new pgSession({
+    pool: pool,
+    tableName: 'session'
+  }),
+  secret: process.env.SESSION_SECRET || 'supersecret_session_key_for_express_session_2026',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 días
+    secure: false,
+    httpOnly: true
+  }
+}));
 app.use(express.json({ limit: '10mb' }));
 
 // Rutas

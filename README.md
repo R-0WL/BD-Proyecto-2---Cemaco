@@ -6,7 +6,7 @@ Aplicación web para la gestión de inventario y ventas de una tienda, desarroll
  Ejecución del proyecto
 ------------------------
 ### Aspectos importantes del proyecto (justificaciones xd)
-0. Tenía el repo privado perdón :( es que prefiero trabajar en terminal y tengo configurado un alias para una función del github client que crea repos ya privados (porque lo uso como mi drive xd) donde solo pongo repo **<el nombre que quiero>** y se me olvidó cambiarle la privacidad acá.
+0. No le había dado push :'(. No me dió tiempo terminarlo por estudiar pero sí tenía una parte 🫠
 1. Originalmente tenía planeado hacer dos portales separados con la lógica separada entre el portal de ventas y el portal de empleados. Pero por cuestión de tiempo lo unifiqué y puse todos los datos visibles para todos (yo sé que es mala práctica pero luego ya lo dividiré como quería) y por eso puede que se sienta que hay cosas que no deberían estar.
 
 2. No me dió tiempo de darle estilos al frontend así que todo el css está hecho con copilot :/ lo demás sí lo hice yo.
